@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="PM Coach">
+<meta name="theme-color" content="#F6F1E7">
+<title>Poker Masterclass Coach</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="#/home"><span class="logo">♠</span><span>Poker Masterclass <b>Coach</b></span></a>
+  <nav class="tabs" id="tabs">
+    <a href="#/home" data-v="home">Home</a>
+    <a href="#/study" data-v="study">Study</a>
+    <a href="#/playbook" data-v="playbook">Playbook</a>
+    <a href="#/fichas" data-v="fichas">Lessons</a>
+    <a href="#/stack" data-v="stack">S.T.A.C.K.</a>
+    <a href="#/ranges" data-v="ranges">Ranges</a>
+    <a href="#/trainer" data-v="trainer">Trainer</a>
+    <a href="#/settings" data-v="settings" aria-label="Settings">⚙︎</a>
+  </nav>
+</header>
+
+<main id="main"></main>
+
+<div id="lightbox" class="lightbox hidden">
+  <div class="lb-bar">
+    <span id="lb-title"></span>
+    <div class="lb-actions">
+      <button id="lb-zoom-out">−</button>
+      <button id="lb-zoom-in">+</button>
+      <button id="lb-close">✕</button>
+    </div>
+  </div>
+  <div class="lb-scroll"><img id="lb-img" alt=""></div>
+</div>
+
+<input type="file" id="zip-input" accept=".zip,application/zip" hidden>
+<script src="jszip.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
