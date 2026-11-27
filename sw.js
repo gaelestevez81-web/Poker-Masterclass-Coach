@@ -1,4 +1,4 @@
-const CACHE = 'pmcoach-v4';
+const CACHE = 'pmcoach-v6';
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'jszip.min.js', 'manifest.json',
   'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });

@@ -2,7 +2,7 @@
    and stored in the device's IndexedDB. Content and interface in English. */
 'use strict';
 
-const VERSION = '1.3.0';
+const VERSION = '1.3.2';
 const POS = ['utg', 'utg1', 'lj', 'hj', 'co', 'btn', 'sb', 'bb'];
 const POS_LABEL = { utg: 'UTG', utg1: 'UTG+1', lj: 'LJ', hj: 'HJ', co: 'CO', btn: 'BU', sb: 'SB', bb: 'BB' };
 const TYPE_ORDER = ['rfi', 'vslimp', 'vsrfi', 'vsopenjam', 'vslimp-allin', 'vs3bet', 'vsallin', 'limp-vsraise', 'limp-vsallin'];
@@ -741,7 +741,9 @@ const LETTERS = [
 const SX = Object.assign({ street: [], type: [], n: 10, wrong: false }, store.get('sx2', {}));
 const SXR = store.get('sxr', {});   // id -> {ok, letters, d}
 let drill = null;
-const cardsHTML = (t) => esc(t).replace(/([2-9TJQKA]?)([♥♦])/g, '<span class="red">$1$2</span>');
+const SUITC = { '♠': 's', '♥': 'h', '♦': 'd', '♣': 'c' };
+// baraja de 4 colores: ♠ negro · ♥ rojo · ♦ azul · ♣ verde. tiles=true -> cartas como fichas grandes
+const cardsHTML = (t, tiles) => esc(t).replace(/(10|[2-9TJQKA])?([♠♥♦♣])/g, (m, r, su) => `<span class="${tiles ? 'pcard' : 'pc'} ${SUITC[su]}">${r || ''}${su}\uFE0E</span>`);
 function spotPool() {
   return SPOTS.filter(x => (!SX.street.length || SX.street.includes(x.street)) && (!SX.type.length || SX.type.includes(x.type)) && (!SX.wrong || (SXR[x.id] && !SXR[x.id].ok)));
 }
@@ -774,7 +776,7 @@ function viewStack(m, args) {
     sxf.innerHTML = ''; store.set('sx2', SX);
     const tg = (arr, v) => { const i = arr.indexOf(v); i >= 0 ? arr.splice(i, 1) : arr.push(v); paint(); };
     const streets = ['Preflop', 'Flop', 'Turn', 'River', 'Multiway'].filter(x => SPOTS.some(y => y.street === x));
-    const types = ['Vanilla', 'ICM', 'PKO'].filter(x => SPOTS.some(y => y.type === x));
+    const types = ['Vanilla', 'ICM', 'PKO', 'Exploit'].filter(x => SPOTS.some(y => y.type === x));
     const r1 = chipRow(streets, SX.street, x => x, v => tg(SX.street, v)); r1.prepend(h('<span class="lab">Street</span>'));
     const r2 = chipRow(types, SX.type, x => x, v => tg(SX.type, v)); r2.prepend(h('<span class="lab">Format</span>'));
     const r3 = chipRow([5, 10, 20, 999], SX.n, x => x === 999 ? 'All' : x + ' spots', v => { SX.n = v; paint(); }); r3.prepend(h('<span class="lab">Session</span>'));
@@ -821,7 +823,7 @@ function stackDrill(m) {
     <span class="score"><span>✅ ${drill.ok}</span></span><a class="mini" href="#/stack">Exit</a></div>`));
   if (!drill.demo) m.append(h(`<div class="qprog"><div style="width:${100 * drill.i / drill.list.length}%"></div></div>`));
   const S = sp.setup || {};
-  const rows = Object.entries(S).map(([k, v]) => `<tr><th>${esc(k)}</th><td class="${k === 'Board' || k === 'Hand' ? 'cards' : ''}">${k === 'Board' || k === 'Hand' ? cardsHTML(v) : esc(v)}</td></tr>`).join('');
+  const rows = Object.entries(S).map(([k, v]) => `<tr><th>${esc(k)}</th><td class="${k === 'Board' || k === 'Hand' ? 'cards' : ''}">${cardsHTML(v, k === 'Board' || k === 'Hand')}</td></tr>`).join('');
   m.append(h(`<div class="card spotc"><div class="rc">${esc(sp.street)} · ${esc(sp.type)}</div><h2 style="margin:4px 0 10px">${esc(sp.title)}</h2>
     <table class="spottbl">${rows}</table><div class="spotq">❓ ${esc(sp.q)}</div></div>`));
   const area = h('<div id="steps"></div>'); m.append(area);
@@ -829,12 +831,12 @@ function stackDrill(m) {
     if (k >= 5) return showDecision();
     const [q, opts, why] = sp.steps[k]; const Lx = LETTERS[k];
     const order = shuffle(opts.map((o, i) => i));
-    const c = h(`<div class="card stepc"><div class="sh"><span class="L">${Lx.L}</span><div><div class="w">${esc(Lx.w)}</div><div class="sq">${esc(q.replace(/^[A-Z]:\s*/, ''))}</div></div></div><div class="sopts"></div><div class="swhy" style="display:none"></div></div>`);
+    const c = h(`<div class="card stepc"><div class="sh"><span class="L">${Lx.L}</span><div><div class="w">${esc(Lx.w)}</div><div class="sq">${cardsHTML(q.replace(/^[A-Z]:\s*/, ''))}</div></div></div><div class="sopts"></div><div class="swhy" style="display:none"></div></div>`);
     order.forEach(i => { const b = h(`<button class="opt">${cardsHTML(opts[i])}</button>`); b.onclick = () => {
       if (c.dataset.done) return; c.dataset.done = 1;
       const ok = i === 0; if (ok) st.right++;
       c.querySelectorAll('.opt').forEach((x, j) => { if (order[j] === 0) x.classList.add('right'); else if (x === b) x.classList.add('wrong'); });
-      const w = $('.swhy', c); w.style.display = ''; w.innerHTML = `<b>${ok ? '✓ Right.' : '✗ Not quite.'}</b> ${esc(why)}`;
+      const w = $('.swhy', c); w.style.display = ''; w.innerHTML = `<b>${ok ? '✓ Right.' : '✗ Not quite.'}</b> ${cardsHTML(why)}`;
       c.classList.add(ok ? 'okc' : 'koc'); showStep(k + 1); }; $('.sopts', c).append(b); });
     area.append(c);
     if (drill.demo) $('.opt', c) && order.indexOf(0) >= 0 && c.querySelectorAll('.opt')[order.indexOf(0)].click();
@@ -850,7 +852,7 @@ function stackDrill(m) {
       if (!drill.demo) { SXR[sp.id] = { ok, letters: st.right, d: Date.now() }; store.set('sxr', SXR); if (ok) drill.ok++; drill.letters += st.right; }
       const w = $('.dwhy', c); w.style.display = '';
       w.append(h(`<div class="answer">${ok ? '✓ Correct' : '✗ The coach plays'}: ${cardsHTML(sp.opts[0])}</div>`));
-      w.append(h(`<p style="line-height:1.5">${esc(sp.why)}</p>`));
+      w.append(h(`<p style="line-height:1.5">${cardsHTML(sp.why)}</p>`));
       w.append(rulesBox(sp.codes || []));
       if (sp.lesson && FBY[sp.lesson]) w.append(h(`<div class="row" style="margin-top:8px"><a class="mini" href="#/ficha/${encodeURIComponent(sp.lesson)}">Open the lesson: ${esc(FBY[sp.lesson].title)}</a></div>`));
       const nx = h(`<div class="row" style="margin-top:14px"><button class="btn">${drill.demo ? 'Done' : 'Next spot →'}</button></div>`);
